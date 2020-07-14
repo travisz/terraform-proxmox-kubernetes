@@ -1,0 +1,49 @@
+### Initialize Cluster
+sudo kubeadm init --control-plane-endpoint "something.local:6443" --upload-certs
+
+### Setup .kube/config
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+### Join Additional Masters
+kubeadm join something.local:6443 --token <token> \
+    --discovery-token-ca-cert-hash sha256:<hash> \
+    --control-plane --certificate-key <key>
+
+### Join Worker Nodes
+kubeadm join something.local:6443 --token <token> \
+    --discovery-token-ca-cert-hash sha256:<hash>
+
+### Issue with Status being "not ready" / CNI not installed
+# https://github.com/kubernetes/kubeadm/issues/1795#issuecomment-610452716
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+
+### Label Workers
+kubectl label node k8s-worker-0 node-role.kubernetes.io/worker=worker
+kubectl label node k8s-worker-1 node-role.kubernetes.io/worker=worker
+kubectl label node k8s-worker-2 node-role.kubernetes.io/worker=worker
+
+### Example nginx deployment (nginx.yaml)
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 3 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+### Create / Apply Deployment
+kubectl apply -f nginx.yaml
