@@ -20,7 +20,7 @@ It is only using a single server for all of the instances, I'm not rich ;)
 | instance_sockets | Number of sockets to allocate to each VM (default: 1) | number | `1` | no |
 | instance_storage_name | Name of the storage to use within Proxmox | string | `` | yes |
 | instance_storage_type | Type of storage to use within Proxmox | string | `` | yes |
-| master_count | Number of Kubernetes Masters | number | `2` | no |
+| master_count | Number of Kubernetes Masters | number | `3` | no |
 | private_key_path | Path to your private key to use with the provisioner | string | `` | yes |
 | proxmox_node_name | Name of the Proxmox Node to deploy the instances on | string | `` | yes |
 | proxmox_url | URL of the Proxmox API | string | `` | yes |
@@ -37,7 +37,8 @@ instance_memory = "4096"
 instance_sockets = "1"
 instance_storage_name = "vmdata"
 instance_storage_type = "dir"
-master_count = "2"
+master_count = "3"
+private_key_path = "/path/to/your/key"
 proxmox_node_name = "proxmox01"
 proxmox_url = "https://proxmox01.local/api2/json"
 proxmox_user = "root@pam"

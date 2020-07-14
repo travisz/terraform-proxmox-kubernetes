@@ -2,4 +2,5 @@
 terraform.tfstate
 terraform.tfstate.backup
 vars
+scripts/password
 scripts/serverlist

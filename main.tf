@@ -5,6 +5,13 @@ provider "proxmox" {
   pm_parallel = "8"
 }
 
+# Generate Password
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "_%@"
+}
+
 # Masters
 resource "proxmox_vm_qemu" "k8s-masters" {
   count       = var.master_count
@@ -48,6 +55,12 @@ resource "proxmox_vm_qemu" "k8s-masters" {
   sshkeys = var.ssh_key
 }
 
+resource "null_resource" "keepalive_password" {
+  provisioner "local-exec" {
+    command = "echo ${random_password.password.result} >> scripts/password"
+  }
+}
+
 resource "null_resource" "gather_info" {
   count = var.master_count
 
@@ -58,6 +71,17 @@ resource "null_resource" "gather_info" {
 
 resource "null_resource" "deploy_master" {
   count = var.master_count
+
+  provisioner "file" {
+    source      = "scripts/password"
+    destination = "/dev/shm/keepalive_password"
+    connection {
+      type        = "ssh"
+      user        = "debian"
+      host        = element(proxmox_vm_qemu.k8s-masters.*.ssh_host, count.index)
+      private_key = file(var.private_key_path)
+    }
+  }
 
   provisioner "file" {
     source      = "scripts/master.sh"

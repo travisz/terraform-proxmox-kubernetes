@@ -50,7 +50,7 @@ APISERVER_SRC_PORT="6443"
 APISERVER_DEST_PORT="6443"
 APISERVER_VIP="192.168.192.240"
 INTERFACE=$(sudo route | grep '^default' | grep -o '[^ ]*$')
-AUTH_PASS="42"
+AUTH_PASS=$(cat /dev/shm/keepalive_password)
 
 # Per Host Variables
 if [[ $(hostname) = "k8s-master-0" ]]; then
