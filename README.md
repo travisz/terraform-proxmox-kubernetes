@@ -5,6 +5,8 @@ This is a work in progress. I'm just getting the shell in place as I work throug
 
 It is only using a single server for all of the instances, I'm not rich ;)
 
+*NOTE*: Please note there are some hard-coded IP addresses and ranges in a few of the scripts. You will want to grep for "192.168.192" and review them as needed.
+
 # Requirements
 * Proxmox Terraform Provider: https://github.com/Telmate/terraform-provider-proxmox
 * export of `PM_PASS` variable
