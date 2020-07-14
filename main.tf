@@ -1,7 +1,8 @@
 # Requires export of PM_PASS
 provider "proxmox" {
-  pm_api_url = var.proxmox_url
-  pm_user    = var.proxmox_user
+  pm_api_url  = var.proxmox_url
+  pm_user     = var.proxmox_user
+  pm_parallel = "8"
 }
 
 # Masters
@@ -47,6 +48,58 @@ resource "proxmox_vm_qemu" "k8s-masters" {
   sshkeys = var.ssh_key
 }
 
+resource "null_resource" "gather_info" {
+  count = var.master_count
+
+  provisioner "local-exec" {
+    command = "echo ${element(proxmox_vm_qemu.k8s-masters.*.name, count.index)} ${element(proxmox_vm_qemu.k8s-masters.*.ssh_host, count.index)} >> scripts/serverlist"
+  }
+}
+
+resource "null_resource" "deploy_master" {
+  count = var.master_count
+
+  provisioner "file" {
+    source      = "scripts/master.sh"
+    destination = "/dev/shm/master.sh"
+
+    connection {
+      type        = "ssh"
+      user        = "debian"
+      host        = element(proxmox_vm_qemu.k8s-masters.*.ssh_host, count.index)
+      private_key = file(var.private_key_path)
+    }
+  }
+
+  provisioner "file" {
+    source      = "scripts/serverlist"
+    destination = "/dev/shm/serverlist"
+
+    connection {
+      type        = "ssh"
+      user        = "debian"
+      host        = element(proxmox_vm_qemu.k8s-masters.*.ssh_host, count.index)
+      private_key = file(var.private_key_path)
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /dev/shm/master.sh",
+      "/bin/bash /dev/shm/master.sh"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "debian"
+      host        = element(proxmox_vm_qemu.k8s-masters.*.ssh_host, count.index)
+      private_key = file(var.private_key_path)
+    }
+  }
+
+  depends_on = [ null_resource.gather_info ]
+}
+
 # Workers
 resource "proxmox_vm_qemu" "k8s-workers" {
   count       = var.worker_count
@@ -85,7 +138,33 @@ resource "proxmox_vm_qemu" "k8s-workers" {
     ]
   }
 
-  ipconfig0 = "ip=192.168.192.22${count.index + 2}/24,gw=192.168.192.1"
+  ipconfig0 = "ip=192.168.192.23${count.index}/24,gw=192.168.192.1"
 
   sshkeys = var.ssh_key
+
+  provisioner "file" {
+    source      = "scripts/worker.sh"
+    destination = "/dev/shm/worker.sh"
+
+    connection {
+      type        = "ssh"
+      user        = "debian"
+      host        = self.ssh_host
+      private_key = file(var.private_key_path)
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /dev/shm/worker.sh",
+      "/bin/bash /dev/shm/worker.sh"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "debian"
+      host        = self.ssh_host
+      private_key = file(var.private_key_path)
+    }
+  }
 }

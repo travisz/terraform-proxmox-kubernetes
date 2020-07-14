@@ -38,9 +38,14 @@ variable "instance_storage_type" {
 }
 
 variable "master_count" {
-  default     = 2
+  default     = 3
   description = "Number of Kubernetes Masters"
   type        = number
+}
+
+variable "private_key_path" {
+  description = "Path to your private key to use with the provisioner"
+  type        = string
 }
 
 variable "proxmox_node_name" {

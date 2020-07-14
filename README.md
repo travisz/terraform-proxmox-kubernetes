@@ -21,6 +21,7 @@ It is only using a single server for all of the instances, I'm not rich ;)
 | instance_storage_name | Name of the storage to use within Proxmox | string | `` | yes |
 | instance_storage_type | Type of storage to use within Proxmox | string | `` | yes |
 | master_count | Number of Kubernetes Masters | number | `2` | no |
+| private_key_path | Path to your private key to use with the provisioner | string | `` | yes |
 | proxmox_node_name | Name of the Proxmox Node to deploy the instances on | string | `` | yes |
 | proxmox_url | URL of the Proxmox API | string | `` | yes |
 | proxmox_user | Valid user to access the Proxmox API | string | `` | yes |
