@@ -7,12 +7,12 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ### Join Additional Masters
-kubeadm join something.local:6443 --token <token> \
+sudo kubeadm join something.local:6443 --token <token> \
     --discovery-token-ca-cert-hash sha256:<hash> \
     --control-plane --certificate-key <key>
 
 ### Join Worker Nodes
-kubeadm join something.local:6443 --token <token> \
+sudo kubeadm join something.local:6443 --token <token> \
     --discovery-token-ca-cert-hash sha256:<hash>
 
 ### Issue with Status being "not ready" / CNI not installed
@@ -23,6 +23,9 @@ kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl versio
 kubectl label node k8s-worker-0 node-role.kubernetes.io/worker=worker
 kubectl label node k8s-worker-1 node-role.kubernetes.io/worker=worker
 kubectl label node k8s-worker-2 node-role.kubernetes.io/worker=worker
+
+### Show Nodes
+kubectl get nodes
 
 ### Example nginx deployment (nginx.yaml)
 apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
@@ -47,3 +50,38 @@ spec:
 
 ### Create / Apply Deployment
 kubectl apply -f nginx.yaml
+
+### Get Deployment Status
+kubectl get deployments nginx
+
+### Create Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-ingress
+
+### Create Load Balancer
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress
+spec:
+  externalTrafficPolicy: Local
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app: nginx
+
+### Describe Service
+kubectl describe svc nginx-ingress
+
+### Delete Service
+kubectl delete svc nginx-ingress
